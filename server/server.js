@@ -18,6 +18,11 @@ app.use(cors({
   credentials: true
 }));
 
+// ⚠️ IMPORTANT: Webhook route MUST come BEFORE express.json()
+// Otherwise express.json() will try to parse the raw webhook body and fail
+app.use('/api/webhooks', webhookRouter);
+
+// Now apply JSON parser for all other routes
 app.use(express.json());
 
 // Add performance headers
@@ -26,9 +31,6 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   next();
 });
-
-// Webhook endpoint (must be BEFORE clerkMiddleware to avoid auth issues)
-app.use('/api/webhooks', webhookRouter);
 
 app.use(clerkMiddleware())
 
