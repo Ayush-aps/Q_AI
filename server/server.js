@@ -11,8 +11,21 @@ import { auth } from './middlewares/auth.js';
 
 const app = express();
  await connectCloudinary();
-app.use(cors());
+
+// Optimize CORS
+app.use(cors({
+  origin: process.env.CLIENT_URL || '*',
+  credentials: true
+}));
+
 app.use(express.json());
+
+// Add performance headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  next();
+});
 
 // Webhook endpoint (must be BEFORE clerkMiddleware to avoid auth issues)
 app.use('/api/webhooks', webhookRouter);
