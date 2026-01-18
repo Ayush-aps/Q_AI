@@ -1,5 +1,7 @@
-import { clerkClient } from '@clerk/express';
+import { Clerk } from '@clerk/clerk-sdk-node';
 import 'dotenv/config';
+
+const clerk = new Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
 
 const PREMIUM_PLAN_ID = 'cplan_37cMzh9u5JVZH0NqY8tElEFyhnG';
 
@@ -10,7 +12,7 @@ async function updateUserToPremium() {
   try {
     console.log(`Updating user ${USER_ID} to premium...`);
     
-    await clerkClient.users.updateUser(USER_ID, {
+    await clerk.users.updateUser(USER_ID, {
       publicMetadata: {
         subscriptions: [
           {
@@ -30,7 +32,7 @@ async function updateUserToPremium() {
     console.log('User can now access premium features!');
     
     // Verify the update
-    const user = await clerkClient.users.getUser(USER_ID);
+    const user = await clerk.users.getUser(USER_ID);
     console.log('\nUser metadata:');
     console.log('publicMetadata:', JSON.stringify(user.publicMetadata, null, 2));
     console.log('privateMetadata:', JSON.stringify(user.privateMetadata, null, 2));

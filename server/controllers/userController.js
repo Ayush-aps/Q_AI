@@ -1,4 +1,7 @@
 import sql  from '../configs/db.js';
+import { clerkClient } from '@clerk/express';
+
+const PREMIUM_PLAN_ID = 'cplan_37cMzh9u5JVZH0NqY8tElEFyhnG';
 
 export const getUserCreations = async (req, res) => {
     try {
@@ -51,3 +54,50 @@ export const toggleLikeCreations = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 }
+
+// Immediately confirm and activate premium subscription
+export const confirmSubscription = async (req, res) => {
+    try {
+        const { userId } = req.auth();
+        const { planId, subscriptionId } = req.body;
+
+        console.log(`Confirming subscription for user ${userId}, plan: ${planId}`);
+
+        // Verify it's the premium plan
+        if (planId !== PREMIUM_PLAN_ID) {
+            return res.json({ 
+                success: false, 
+                message: 'Only premium plan confirmation is supported' 
+            });
+        }
+
+        // Immediately update Clerk user metadata
+        await clerkClient.users.updateUser(userId, {
+            publicMetadata: {
+                subscriptions: [
+                    {
+                        planId: planId,
+                        status: 'active',
+                        subscriptionId: subscriptionId || `manual_${Date.now()}`,
+                        updatedAt: new Date().toISOString()
+                    }
+                ]
+            },
+            privateMetadata: {
+                plan: 'premium',
+                free_usage: 0 // Reset free usage
+            }
+        });
+
+        console.log(`✅ User ${userId} confirmed as premium`);
+
+        res.json({ 
+            success: true, 
+            message: 'Premium subscription activated!',
+            plan: 'premium'
+        });
+    } catch (error) {
+        console.error('Subscription confirmation error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
